@@ -1,46 +1,55 @@
 const utils = require("./utils");
-const {downloadLatestGameFiles} = require("./file_tab")
-const { ipcMain } = require('electron');
+const { downloadLatestGameFiles } = require("./file_tab");
+const { ipcMain } = require("electron");
 
 const getTabData = () => {
-    return {
-        label: 'About/Links',
-        submenu: [{
-                label: 'About the app...',
-                click: handleClick_About
-            },
-            {
-                label: 'PokeRogue Discord',
-                click: () => {
-                    require('electron').shell.openExternal("https://discord.com/invite/pokerogue");
-                }
-            },
-            {
-                label: 'Futaba\'s Discord',
-                click: () => {
-                    require('electron').shell.openExternal("https://discord.gg/PeJbKTCXxh");
-                }
-            },
-            {
-                label: 'Game file repo',
-                click: () => {
-                    require('electron').shell.openExternal("https://github.com/Admiral-Billy/pokerogue/releases");
-                }
-            },
-            {
-                label: 'PokeRogue app overview/tutorial',
-                click: () => {
-                    require('electron').shell.openExternal("https://www.youtube.com/watch?v=8feJJRHFen0");
-                }
-            }
-        ]
-    }
+  return {
+    label: "关于",
+    submenu: [
+      {
+        label: "关于这个app",
+        click: handleClick_About,
+      },
+      {
+        label: "PokeRogue Discord",
+        click: () => {
+          require("electron").shell.openExternal(
+            "https://discord.com/invite/pokerogue"
+          );
+        },
+      },
+      {
+        label: "Futaba's Discord",
+        click: () => {
+          require("electron").shell.openExternal(
+            "https://discord.gg/PeJbKTCXxh"
+          );
+        },
+      },
+      {
+        label: "游戏资源备份",
+        click: () => {
+          require("electron").shell.openExternal(
+            "https://github.com/Admiral-Billy/pokerogue/releases"
+          );
+        },
+      },
+      {
+        label: "《PokeRogue》应用概述/教程",
+        click: () => {
+          require("electron").shell.openExternal(
+            "https://www.youtube.com/watch?v=8feJJRHFen0"
+          );
+        },
+      },
+    ],
+  };
 };
 
 let window;
 
 function handleClick_About() {
-    const content = `
+  const content = `
         <style>
             * {
                 font-family: Verdana, sans-serif;
@@ -99,6 +108,10 @@ function handleClick_About() {
                 <td><a href="https://github.com/Admiral-Billy">Admiral Billy</a></td>
             </tr>
             <tr>
+                <td>二次开发</td>
+                <td><a href="https://www.liuqi.cool/">柒书</a></td>
+            </tr>
+            <tr>
                 <td>Project</td>
                 <td><a href="https://github.com/Admiral-Billy/Pokerogue-App">Pokerogue-App</a></td>
             </tr>
@@ -110,64 +123,98 @@ function handleClick_About() {
             </tr>
         </table>
     `;
-    window = utils.createPopup({
-        title: "About",
-        width: 350,
-        height: 170,
-        modal: false,
-        closeable: true
-    }, content);
+  window = utils.createPopup(
+    {
+      title: "About",
+      width: 350,
+      height: 170,
+      modal: false,
+      closeable: true,
+    },
+    content
+  );
 
-    const updateVer = (elemId, ver) => window.webContents.executeJavaScript(`document.getElementById("${elemId}").innerText = "${ver}"`);
+  const updateVer = (elemId, ver) =>
+    window.webContents.executeJavaScript(
+      `document.getElementById("${elemId}").innerText = "${ver}"`
+    );
 
-    
-    new Promise((resolve, _reject) => {
-        let n = 0;
-        function maybeEnableButton() {
-            n++;
-            if(n >= 2)
-                resolve();
-        }
-        utils.fetchCurrentAppVersionInfo()
-            .then(version => {
-                updateVer("currentAppVersion", version);
-            })
-            .catch(reason => console.error("Failed to fetch current app version with error %O", reason))
-            .finally(maybeEnableButton)
-        utils.fetchLatestAppVersionInfo()
-            .then(releaseData => {
-                updateVer("latestAppVersion", releaseData.tag_name.replace(/[^\d.]/g, ""));
-            })
-            .catch(reason => console.error("Failed to fetch latest app version with error %O", reason))
-            .finally(maybeEnableButton)
-    }).then(() => window.webContents.executeJavaScript(`document.getElementById("buttonAppUpdate").disabled = document.getElementById("currentAppVersion").innerText === document.getElementById("latestAppVersion").innerText;`));
-	
-    new Promise((resolve, _reject) => {
-        let n = 0;
-        function maybeEnableButton() {
-            n++;
-            if(n >= 2)
-                resolve();
-        }
-        utils.fetchCurrentGameVersionInfo()
-            .then(version => {
-                updateVer("currentGameVersion", version);
-            })
-            .catch(reason => console.error("Failed to fetch current game version with error %O", reason))
-            .finally(maybeEnableButton);
-        utils.fetchLatestGameVersionInfo()
-            .then(releaseData => {
-                updateVer("latestGameVersion", releaseData.tag_name);
-            })
-            .catch(reason => console.error("Failed to fetch latest game version with error %O", reason))
-            .finally(maybeEnableButton)
-    })//.then(() => window.webContents.executeJavaScript(`document.getElementById("buttonGameUpdate").disabled = document.getElementById("currentGameVersion").innerText === document.getElementById("latestGameVersion").innerText;`)); leave commented out until needed again
+  new Promise((resolve, _reject) => {
+    let n = 0;
+    function maybeEnableButton() {
+      n++;
+      if (n >= 2) resolve();
+    }
+    utils
+      .fetchCurrentAppVersionInfo()
+      .then((version) => {
+        updateVer("currentAppVersion", version);
+      })
+      .catch((reason) =>
+        console.error(
+          "Failed to fetch current app version with error %O",
+          reason
+        )
+      )
+      .finally(maybeEnableButton);
+    utils
+      .fetchLatestAppVersionInfo()
+      .then((releaseData) => {
+        updateVer(
+          "latestAppVersion",
+          releaseData.tag_name.replace(/[^\d.]/g, "")
+        );
+      })
+      .catch((reason) =>
+        console.error(
+          "Failed to fetch latest app version with error %O",
+          reason
+        )
+      )
+      .finally(maybeEnableButton);
+  }).then(() =>
+    window.webContents.executeJavaScript(
+      `document.getElementById("buttonAppUpdate").disabled = document.getElementById("currentAppVersion").innerText === document.getElementById("latestAppVersion").innerText;`
+    )
+  );
 
-    window.on('close', () => window = undefined);
+  new Promise((resolve, _reject) => {
+    let n = 0;
+    function maybeEnableButton() {
+      n++;
+      if (n >= 2) resolve();
+    }
+    utils
+      .fetchCurrentGameVersionInfo()
+      .then((version) => {
+        updateVer("currentGameVersion", version);
+      })
+      .catch((reason) =>
+        console.error(
+          "Failed to fetch current game version with error %O",
+          reason
+        )
+      )
+      .finally(maybeEnableButton);
+    utils
+      .fetchLatestGameVersionInfo()
+      .then((releaseData) => {
+        updateVer("latestGameVersion", releaseData.tag_name);
+      })
+      .catch((reason) =>
+        console.error(
+          "Failed to fetch latest game version with error %O",
+          reason
+        )
+      )
+      .finally(maybeEnableButton);
+  }); //.then(() => window.webContents.executeJavaScript(`document.getElementById("buttonGameUpdate").disabled = document.getElementById("currentGameVersion").innerText === document.getElementById("latestGameVersion").innerText;`)); leave commented out until needed again
+
+  window.on("close", () => (window = undefined));
 }
 
-ipcMain.on('about_tab::buttonClick::appUpdate', (_event, _arg) => {
-    // TODO: Implement downloading the app
+ipcMain.on("about_tab::buttonClick::appUpdate", (_event, _arg) => {
+  // TODO: Implement downloading the app
 });
 
 module.exports.getTabData = getTabData;

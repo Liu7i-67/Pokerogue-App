@@ -52,6 +52,14 @@ const getTabData = () => {
         },
       },
       {
+        label: "柒书特供版属性克制表",
+        click: () => {
+          require("electron").shell.openExternal(
+            "https://www.liuqi.cool/html/tools/pokemon/attr/index.html"
+          );
+        },
+      },
+      {
         label: "类型克制表",
         accelerator: "CommandOrControl+Y",
         click: () => {

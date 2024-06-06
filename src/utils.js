@@ -292,7 +292,7 @@ function updateMenu() {
     getFileTabData(),
     getSettingsTabData(),
     getUtilitiesTabData(),
-    getEditTabData(),
+    // getEditTabData(),
     getAboutTabData(),
   ];
   const menu = Menu.buildFromTemplate(tabs);

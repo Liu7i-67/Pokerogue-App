@@ -6,7 +6,11 @@ const globals = require("./globals");
 
 const { getTabData: getAboutTabData } = require("./about_tab");
 const { getTabData: getSettingsTabData } = require("./settings_tab");
-const { getTabData: getUtilitiesTabData } = require("./utilities_tab");
+const {
+  getTabData: getUtilitiesTabData,
+  getQuikyType,
+  get67,
+} = require("./utilities_tab");
 const { getTabData: getEditTabData } = require("./edit_tab");
 const { getTabData: getFileTabData } = require("./file_tab");
 
@@ -294,6 +298,8 @@ function updateMenu() {
     getUtilitiesTabData(),
     // getEditTabData(),
     getAboutTabData(),
+    getQuikyType(),
+    get67(),
   ];
   const menu = Menu.buildFromTemplate(tabs);
   Menu.setApplicationMenu(menu);

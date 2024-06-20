@@ -96,31 +96,31 @@ function handleClick_About() {
         </script>
         <table class="table-outline">
             <tr>
-                <td>Current App Version</td>
+                <td>当前程序版本</td>
                 <td id="currentAppVersion"></td>
             </tr>
             <tr>
-                <td>Latest App Version</td>
+                <td>最新的程序版本</td>
                 <td id="latestAppVersion"></td>
             </tr>
             <tr>
-                <td>Current Game Version</td>
+                <td>当前游戏文件版本</td>
                 <td id="currentGameVersion"></td>
             </tr>
             <tr>
-                <td>Latest Game Version</td>
+                <td>最新游戏文件版本</td>
                 <td id="latestGameVersion"></td>
             </tr>
             <tr>
-                <td>Author</td>
+                <td>原作者</td>
                 <td><a href="https://github.com/Admiral-Billy">Admiral Billy</a></td>
             </tr>
             <tr>
                 <td>二次开发</td>
-                <td><a href="https://www.liuqi.cool/">柒书</a></td>
+                <td><a href="https://www.liuqi.cool/">神南火</a></td>
             </tr>
             <tr>
-                <td>Project</td>
+                <td>原项目地址</td>
                 <td><a href="https://github.com/Admiral-Billy/Pokerogue-App">Pokerogue-App</a></td>
             </tr>
             <tr>
@@ -195,19 +195,17 @@ function handleClick_About() {
     utils
       .fetchCurrentGameVersionInfo()
       .then((version) => {
-        updateVer("currentGameVersion", version);
+        updateVer("currentGameVersion", version || "v0.0.0");
       })
-      .catch((reason) =>
-        console.error(
-          "Failed to fetch current game version with error %O",
-          reason
-        )
-      )
+      .catch((reason) => {
+        updateVer("currentGameVersion", "v0.0.0");
+        console.error("获取当前游戏版本失败 %O", reason);
+      })
       .finally(maybeEnableButton);
     utils
-      .fetchLatestGameVersionInfo()
+      .fetchUpLatestGameVersionInfo()
       .then((releaseData) => {
-        updateVer("latestGameVersion", releaseData.tag_name);
+        updateVer("latestGameVersion", releaseData.name);
       })
       .catch((reason) =>
         console.error(

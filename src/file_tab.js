@@ -39,15 +39,15 @@ const getTabData = () => {
       },
       { type: "separator" },
       {
-        label: "下载Up分享的最新游戏文件(离线)",
+        label: "下载Up分享的最新游戏文件(离线-无需神秘力量)",
         click: handleClick_Download_Up_Latest,
       },
       {
-        label: "下载最新游戏文件(离线)",
+        label: "下载最新游戏文件(离线-需要神秘力量)",
         click: handleClick_DownloadLatest,
       },
       {
-        label: "下载Futaba的构建",
+        label: "下载Futaba的构建(需要神秘力量)",
         click: handleClick_DownloadLatestFutaba,
       },
       { type: "separator" },

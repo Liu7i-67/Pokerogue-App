@@ -1,5 +1,5 @@
-const path = require('path');
-const { EventEmitter } = require('stream');
+const path = require("path");
+const { EventEmitter } = require("stream");
 
 let onStart = true;
 let mainWindow;
@@ -19,12 +19,16 @@ let autoHideMenu = false;
 let hideCursor = false;
 let gameDir;
 let currentVersionPath;
-let latestAppReleaseUrl = 'https://api.github.com/repos/Admiral-Billy/Pokerogue-App/releases/latest';
-let latestGameReleaseUrl = 'https://api.github.com/repos/Admiral-Billy/pokerogue/releases/latest';
+let latestAppReleaseUrl =
+  "https://api.github.com/repos/Admiral-Billy/Pokerogue-App/releases/latest";
+let latestGameReleaseUrl =
+  "https://api.github.com/repos/Admiral-Billy/pokerogue/releases/latest";
+let latestUpGameReleaseUrl =
+  "https://gitee.com/api/v5/repos/liu7i/PokeRogue-App-Android/releases/latest";
 let httpOptions = {
-    headers: {
-        'User-Agent': 'Pokerogue-App',
-    }
+  headers: {
+    "User-Agent": "Pokerogue-App",
+  },
 };
 let discordEnabled = true;
 
@@ -48,5 +52,6 @@ module.exports.gameDir = gameDir;
 module.exports.currentVersionPath = currentVersionPath;
 module.exports.latestAppReleaseUrl = latestAppReleaseUrl;
 module.exports.latestGameReleaseUrl = latestGameReleaseUrl;
+module.exports.latestUpGameReleaseUrl = latestUpGameReleaseUrl;
 module.exports.httpOptions = httpOptions;
 module.exports.discordEnabled = discordEnabled;

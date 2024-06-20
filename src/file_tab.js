@@ -39,6 +39,10 @@ const getTabData = () => {
       },
       { type: "separator" },
       {
+        label: "下载Up分享的最新游戏文件(离线)",
+        click: handleClick_Download_Up_Latest,
+      },
+      {
         label: "下载最新游戏文件(离线)",
         click: handleClick_DownloadLatest,
       },
@@ -69,6 +73,15 @@ function handleClick_Reload() {
 
 function handleClick_ReloadAndClear() {
   clearCache();
+}
+
+async function handleClick_Download_Up_Latest() {
+  try {
+    await downloadLatestUpGameFiles(globals.mainWindow);
+    utils.saveSettings();
+  } catch (error) {
+    console.error("游戏文件下载失败:", error);
+  }
 }
 
 async function handleClick_DownloadLatest() {
@@ -173,12 +186,6 @@ function downloadLatestGameFiles(parentWindow, modded) {
 
                 fs.unlinkSync(zipPath);
 
-                // Now that we've saved the files, we write the current tag version for reference
-                console.log(
-                  "globals.currentVersionPath: %O",
-                  globals.currentVersionPath
-                );
-                console.log("releaseData.tag_name: %O", releaseData.tag_name);
                 fs.writeFile(
                   globals.currentVersionPath,
                   releaseData.tag_name,
@@ -206,6 +213,108 @@ function downloadLatestGameFiles(parentWindow, modded) {
         } else {
           console.error("game.zip asset not found in the latest release");
           reject(new Error("game.zip asset not found in the latest release."));
+        }
+      })
+      .catch((reason) => {
+        reject(reason);
+      });
+  });
+}
+
+function downloadLatestUpGameFiles(parentWindow) {
+  return new Promise((resolve, reject) => {
+    utils
+      .fetchUpLatestGameVersionInfo()
+      .then(async (releaseData) => {
+        const name = releaseData.name || "";
+
+        const zipAssets = releaseData.assets.filter(
+          (i) => i.name.includes(".zip") && i.name.includes("game_")
+        );
+
+        // 删除老的文件
+        fs.rmSync(globals.gameDir, {
+          recursive: true,
+          force: true,
+        });
+
+        if (zipAssets.length) {
+          opts = {
+            indeterminate: false,
+            text: `[${name}]正在下载第0/${zipAssets.length}个文件`,
+            detail: "等待下载...",
+            maxValue: zipAssets.length,
+            closeOnComplete: false,
+            modal: true,
+            alwaysOnTop: true,
+            parent: parentWindow,
+          };
+
+          progressBar = new ProgressBar(opts);
+
+          for (let i = 0; i < zipAssets.length; i++) {
+            const zipAsset = zipAssets[i];
+            const zipUrl = zipAsset.browser_download_url;
+            const zipPath = path.join(app.getPath("temp"), `game_${i}.zip`);
+
+            progressBar.text = `[${name}]正在下载第${i + 1}/${
+              zipAssets.length
+            }个文件`;
+            progressBar.detail = "文件下载中...";
+            progressBar.value = i;
+            try {
+              await utils.downloadUpFile(zipUrl, zipPath);
+
+              const zip = new AdmZip(zipPath);
+              progressBar.detail = `文件提取中……(请耐心等待)`;
+              zip.extractAllTo(globals.gameDir, true);
+            } catch (e) {
+              progressBar.close();
+              reject(error);
+            }
+
+            function onBytesReceived(receivedBytes) {
+              if (!progressBar) return;
+              progressBar.detail = `接收到${receivedBytes} 字节...`;
+            }
+
+            if (!downloadOngoing) {
+              downloadOngoing = true;
+              await utils
+                .downloadUpFile(zipUrl, zipPath, onBytesReceived)
+                .then((_) => {
+                  const zip = new AdmZip(zipPath);
+
+                  progressBar.detail = `文件提取中……(请耐心等待)`;
+
+                  zip.extractAllTo(globals.gameDir, true);
+
+                  fs.unlinkSync(zipPath);
+                  resolve();
+                })
+                .catch((error) => {
+                  reject(error);
+                })
+                .finally(() => (downloadOngoing = false));
+            }
+          }
+
+          progressBar.close();
+          // 现在我们已经保存了文件，我们写入当前的标签版本以供参考
+          fs.writeFile(globals.currentVersionPath, name, "utf8", (err) => {
+            if (err)
+              console.error(
+                "Failed to write Current Version with error %O",
+                err
+              );
+          });
+          globals.gameFilesDownloaded = true;
+          utils.updateMenu();
+          if (globals.isOfflineMode) {
+            utils.resetGame();
+          }
+
+          resolve();
         }
       })
       .catch((reason) => {

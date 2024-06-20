@@ -27,7 +27,15 @@ const getTabData = () => {
         },
       },
       {
-        label: "游戏资源备份",
+        label: "Up游戏资源地址",
+        click: () => {
+          require("electron").shell.openExternal(
+            "https://gitee.com/liu7i/PokeRogue-App-Android/releases"
+          );
+        },
+      },
+      {
+        label: "游戏资源地址",
         click: () => {
           require("electron").shell.openExternal(
             "https://github.com/Admiral-Billy/pokerogue/releases"

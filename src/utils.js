@@ -1,7 +1,7 @@
 const fs = require("fs");
 const https = require("https");
 const path = require("path");
-const { app, Menu, BrowserWindow, globalShortcut } = require("electron");
+const { app, Menu } = require("electron");
 const globals = require("./globals");
 
 const { getTabData: getAboutTabData } = require("./about_tab");
@@ -144,6 +144,39 @@ function fetchLatestGameVersionInfo(opts) {
   });
 }
 
+function fetchUpLatestGameVersionInfo(opts) {
+  opts = opts ?? {};
+  const options = {
+    headers: {
+      "User-Agent": "Pokerogue-App",
+    },
+    ...opts,
+  };
+  return new Promise((resolve, reject) => {
+    https
+      .get(globals.latestUpGameReleaseUrl, options, (response) => {
+        let data = "";
+
+        response.on("data", (chunk) => {
+          data += chunk;
+        });
+
+        response.on("end", () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch (error) {
+            console.error("Error parsing release data:", error);
+            reject(new Error("Failed to parse the release data."));
+          }
+        });
+      })
+      .on("error", (error) => {
+        console.error("Error fetching latest release:", error);
+        reject(error);
+      });
+  });
+}
+
 function saveSettings() {
   const userDataPath = app.getPath("userData");
   const settingsFilePath = path.join(userDataPath, "settings.json");
@@ -248,6 +281,118 @@ function resetGame() {
   });
 }
 
+function getUpFileURL(url) {
+  const outputPath = path.join(app.getPath("temp"), `game_realUrl.txt`);
+  const fileStream = fs.createWriteStream(outputPath);
+  opts = {};
+  const downloadOptions = {
+    ...opts,
+    timeout: 30000, // 设置30秒超时
+  };
+
+  return new Promise((resolve, reject) => {
+    const request = https.get(url, downloadOptions, (response) => {
+      if (response.statusCode === 302) {
+        // 处理重定向
+        const redirectUrl = response.headers.location;
+        https.get(redirectUrl, downloadOptions, (response) => {
+          response.pipe(fileStream);
+        });
+      } else {
+        // 非重定向情况
+        response.pipe(fileStream);
+      }
+
+      fileStream.on("finish", () => {
+        fileStream.close();
+        // 读取文件中的数据
+        fs.readFile(outputPath, "utf8", (err, data) => {
+          if (err) {
+            console.error("读取文件出错:", err);
+            return;
+          }
+          // 正则表达式提取 <a> 标签中的 href 属性
+          const regex = /<a[^>]*href="([^"]*)"[^>]*>/i;
+          const match = data.match(regex);
+          if (match && match[1]) {
+            resolve(match[1]);
+          } else {
+            reject(url);
+          }
+        });
+      });
+    });
+
+    request.on("error", (error) => {
+      console.error(`下载 ${url} 出错: %O`, error);
+      fileStream.close();
+      reject("");
+    });
+
+    request.setTimeout(30000, () => {
+      request.destroy(); // 超时时中止请求
+      console.error(`下载 ${url} 超时`);
+      fileStream.close();
+      reject("");
+    });
+
+    fileStream.on("error", (error) => {
+      console.error("文件流出错:", error);
+      fileStream.close();
+      reject("");
+    });
+  });
+}
+
+function downloadUpFile(url, outputPath, opts) {
+  const fileStream = fs.createWriteStream(outputPath);
+  opts = opts ?? {};
+  const downloadOptions = {
+    ...opts,
+    timeout: 30000, // 设置30秒超时
+  };
+
+  return new Promise(async (resolve, reject) => {
+    const realUrl = await getUpFileURL(url);
+    const request = https.get(realUrl || url, downloadOptions, (response) => {
+      if (response.statusCode === 302) {
+        // 处理重定向
+        const redirectUrl = response.headers.location;
+        https.get(redirectUrl, downloadOptions, (response) => {
+          response.pipe(fileStream);
+        });
+      } else {
+        // 非重定向情况
+        response.pipe(fileStream);
+      }
+
+      fileStream.on("finish", () => {
+        fileStream.close();
+        resolve(outputPath);
+      });
+    });
+
+    request.on("error", (error) => {
+      console.error(`下载 ${url} 出错: %O`, error);
+      fileStream.close();
+      reject(error);
+    });
+
+    request.setTimeout(30000, () => {
+      request.destroy(); // 超时时中止请求
+      console.error(`下载 ${url} 超时`);
+      fileStream.close();
+      reject(new Error("下载超时"));
+    });
+
+    fileStream.on("error", (error) => {
+      console.error("文件流出错:", error);
+      fileStream.close();
+      reject(error);
+    });
+  });
+}
+
 function downloadFile(url, outputPath, onBytesReceived, opts) {
   const fileStream = fs.createWriteStream(outputPath);
   let receivedBytes = 0;
@@ -343,6 +488,7 @@ module.exports.fetchCurrentAppVersionInfo = fetchCurrentAppVersionInfo;
 module.exports.fetchLatestAppVersionInfo = fetchLatestAppVersionInfo;
 module.exports.fetchCurrentGameVersionInfo = fetchCurrentGameVersionInfo;
 module.exports.fetchLatestGameVersionInfo = fetchLatestGameVersionInfo;
+module.exports.fetchUpLatestGameVersionInfo = fetchUpLatestGameVersionInfo;
 module.exports.saveSettings = saveSettings;
 module.exports.loadSettings = loadSettings;
 module.exports.resetGame = resetGame;
@@ -350,3 +496,4 @@ module.exports.downloadFile = downloadFile;
 module.exports.updateMenu = updateMenu;
 module.exports.applyDarkMode = applyDarkMode;
 module.exports.applyCursorHide = applyCursorHide;
+module.exports.downloadUpFile = downloadUpFile;
